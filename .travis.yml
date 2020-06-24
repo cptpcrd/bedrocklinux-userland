@@ -1,0 +1,36 @@
+os: linux
+dist: bionic
+
+addons:
+  apt:
+    update: true
+    packages:
+      - autoconf
+      - autopoint
+      - bison
+      - fakeroot
+      - gcc
+      - git
+      - gpg
+      - gzip
+      - libtool
+      - make
+      - meson
+      - ninja-build
+      - pkg-config
+      - rsync
+      - shellcheck
+      - cppcheck
+      - clang
+      - clang-tools
+      - indent
+
+install:
+  - wget https://github.com/mvdan/sh/releases/download/v3.1.1/shfmt_v3.1.1_linux_amd64 -O /usr/local/bin/shfmt
+
+script:
+  - make format && [ -z "$(git status --porcelain=v1)" ]
+  # So that `make check` can find /bedrock/share/common-code
+  - sudo ln -s "$(pwd)/src/slash-bedrock" /bedrock
+  - make check
+  - make SKIPSIGN=true
