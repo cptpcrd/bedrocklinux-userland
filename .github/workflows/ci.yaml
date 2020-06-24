@@ -1,0 +1,96 @@
+name: CI
+on:
+  - push
+  - pull_request
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SHFMT_VERSION: 3.1.2
+
+jobs:
+  formatting:
+    name: Formatting
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up repo
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          set -e
+          sudo apt-get -y install indent
+          sudo wget https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64 -O /usr/local/bin/shfmt
+          sudo chmod 755 /usr/local/bin/shfmt
+      - name: Format code
+        run: make format
+      - name: Ensure no changes were made
+        run: |
+          if ! test -z "$(git status --porcelain=v1)"; then
+            git diff
+            exit 1
+          fi
+
+  linting:
+    name: Linting
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up repo
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          set -e
+          sudo apt-get -y install shellcheck cppcheck clang gcc clang-tools \
+            indent uthash-dev libcap-dev libattr1-dev
+          sudo wget https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64 -O /usr/local/bin/shfmt
+          sudo chmod 755 /usr/local/bin/shfmt
+      - name: Symlink /bedrock in place
+        run: 'sudo ln -s "$(pwd)/src/slash-bedrock" /bedrock'
+      - name: Lint code
+        run: make check
+
+  build:
+    name: Build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up repo
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y install autoconf autopoint bison fakeroot gcc git gpg \
+            gzip libtool make meson ninja-build pkg-config rsync
+      - name: Build install script
+        run: make SKIPSIGN=true
+
+      - name: Rename install script
+        run: mv bedrock-linux-*-*.sh bedrock-linux-installer.sh
+      - name: Upload install script artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: bedrock-installer
+          path: bedrock-linux-installer.sh
+
+  hijack-ubuntu:
+    name: Hijack Ubuntu (without rebooting)
+
+    needs: [build]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up repo
+        uses: actions/checkout@v2
+      - name: Download install script
+        uses: actions/download-artifact@v2
+        with:
+          name: bedrock-installer
+
+      - name: Hijack
+        run: 'echo "Not reversible!" | sudo color_priority= sh bedrock-linux-installer.sh --hijack'
