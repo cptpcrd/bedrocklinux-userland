@@ -143,7 +143,7 @@ jobs:
 
       - name: Hijack VM
         run: |
-          scp bedrock-linux-installer.sh ubuntu@localhost:~
+          scp -P 2222 bedrock-linux-installer.sh ubuntu@localhost:~
           ssh -p 2222 ubuntu@localhost 'echo "Not reversible!" | sudo sh bedrock-linux-installer.sh --hijack; shutdown -r now'
 
       - name: Wait for VM to boot
