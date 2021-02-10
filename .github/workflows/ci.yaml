@@ -127,7 +127,7 @@ jobs:
             -drive file=user-data.img,format=raw \
             -m 2G \
             -nic user,hostfwd=tcp:127.0.0.1:2222-:22 \
-            -nographic &>/dev/null </dev/null &
+            -nographic &>vm-output.log </dev/null &
 
       - name: Wait for VM to boot
         run: |
@@ -159,3 +159,10 @@ jobs:
           brl list
           ls -la /bedrock
           '
+
+      - name: Upload VM output log
+        uses: actions/upload-artifact@v2
+        with:
+          name: vm-output-log
+          path: vm-output.log
+        if: always()
