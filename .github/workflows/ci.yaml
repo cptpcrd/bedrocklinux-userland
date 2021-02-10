@@ -21,7 +21,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          set -e
           sudo apt-get -y install indent
           sudo wget https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64 -O /usr/local/bin/shfmt
           sudo chmod 755 /usr/local/bin/shfmt
@@ -44,7 +43,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          set -e
           sudo apt-get -y install shellcheck cppcheck clang gcc clang-tools \
             indent uthash-dev libcap-dev libattr1-dev
           sudo wget https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64 -O /usr/local/bin/shfmt
