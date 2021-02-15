@@ -145,9 +145,18 @@ jobs:
         run: |
           scp -P 2222 bedrock-linux-installer.sh ubuntu@localhost:~
           ssh -p 2222 ubuntu@localhost 'echo "Not reversible!" | sudo sh bedrock-linux-installer.sh --hijack'
-          ssh -p 2222 ubuntu@localhost 'sudo shutdown -r now' || true
-          # Give it some time to start rebooting
-          sleep 20
+
+      - name: Reboot VM
+        run: |
+          ssh -p 2222 ubuntu@localhost 'sudo shutdown -h now' || true
+          # Wait for it to shut down
+          while pgrep qemu-system &>/dev/null; do sleep 1; done
+          qemu-system-x86_64 \
+            -drive file=focal-server-cloudimg-amd64.img,format=qcow2 \
+            -drive file=user-data.img,format=raw \
+            -m 2G \
+            -nic user,hostfwd=tcp:127.0.0.1:2222-:22 \
+            -nographic &>vm-output.log </dev/null &
 
       - name: Wait for VM to boot
         run: |
